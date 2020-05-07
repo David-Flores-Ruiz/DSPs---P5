@@ -38,3 +38,51 @@ t3 = 0:step:(step*(sizeOxi3-1)); % Duración de n muestras en segundos: Oxi3
 
 
 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Se GRAFICA las salidas de cada uno de los 3 archivos originales
+figure(1);  % Grafica de la señal orginal de cada archivo
+subplot(2, 3, 1) % Varias Graficas (2 filas, 3 columnas, 1ra posición)
+plot(t1,Struct_oxi1.x_ir)  % Señal original: Oxi1
+title('IR - señal 1') % Titulo del gráfico
+xlabel('tiempo (s)') % Nombre del eje X
+ylabel('Amplitud Am')% Nombre del eje Y
+grid on % Cuadrícula Activada
+
+subplot(2, 3, 4) % Varias Graficas (2 filas, 3 columnas, 4ta posición)
+plot(t1,Struct_oxi1.x_red)  % Señal original: Oxi1
+title('RED - señal 1 (BPM)') % Titulo del gráfico
+xlabel('tiempo (s)') % Nombre del eje X
+ylabel('Amplitud Am')% Nombre del eje Y
+grid on % Cuadrícula Activada
+
+subplot(2, 3, 2) % Varias Graficas (2 filas, 3 columnas, 2da posición)
+plot(t2,Struct_oxi2.x_ir)  % Señal original: Oxi2
+title('IR - señal 2') % Titulo del gráfico
+xlabel('tiempo (s)') % Nombre del eje X
+ylabel('Amplitud Am')% Nombre del eje Y
+grid on % Cuadrícula Activada
+
+subplot(2, 3, 5) % Varias Graficas (2 filas, 3 columnas, 5ta posición)
+plot(t2,Struct_oxi2.x_red)  % Señal original: Oxi2
+title('RED - señal 2 (BPM)') % Titulo del gráfico
+xlabel('tiempo (s)') % Nombre del eje X
+ylabel('Amplitud Am')% Nombre del eje Y
+grid on % Cuadrícula Activada
+
+subplot(2, 3, 3) % Varias Graficas (2 filas, 3 columnas, 3ra posición)
+plot(t3,Struct_oxi3.x_ir)  % Señal original: Oxi3
+title('IR - señal 3') % Titulo del gráfico
+xlabel('tiempo (s)') % Nombre del eje X
+ylabel('Amplitud Am')% Nombre del eje Y
+grid on % Cuadrícula Activada
+
+subplot(2, 3, 6) % Varias Graficas (2 filas, 3 columnas, 6ta posición)
+plot(t3,Struct_oxi3.x_red)  % Señal original: Oxi3
+title('RED - señal 3 (BPM)') % Titulo del gráfico
+xlabel('tiempo (s)') % Nombre del eje X
+ylabel('Amplitud Am')% Nombre del eje Y
+grid on % Cuadrícula Activada
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
