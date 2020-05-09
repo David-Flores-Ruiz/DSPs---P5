@@ -1,7 +1,8 @@
-%%%%%%%%%%%%%%% P5 de DSP's: "GEN... %%%%%%%%%%%%%%%%
-%                                DE UNA ..."                   %
-% Implementar un sistema ,
-% sobre una señal.
+%%%%%%%%%%%%%%%% P5 de DSP's: "CÁLCULO DEL RITMO CARDIACO %%%%%%%%%%%%%%%%%
+%                  Y DEL NIVEL DE OXÍGENO EN LA SANGRE"                   %
+%                                                                         %
+%   Realizar el cálculo del ritmo cardiaco y del nivel de saturación del  %
+% oxígeno en la sangre, procesando las señales correspondientes en MatLab %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear all;
@@ -77,26 +78,84 @@ X_red3_w  = abs( fft(Struct_oxi3.x_red,nfft3) );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+
+%%%%%%%%%%%%%%%%% BÚSQUEDA DEL RITMO CARDIACO EN BPM y BPS %%%%%%%%%%%%%%%%
 fprintf('Valores TF red1: 1 - 10');
 X_red1_w(1:10)
 fprintf(' - Eliminamos los primeros  5 componentes de TF \n');
 X_red1_w(1:5) = 0;
 fprintf('Valores TF red1: 1 - 10');
 X_red1_w(1:10)
+fprintf(' - Eliminamos los ultimos componentes: "Pasabanda Manual" \n\n');
+X_red1_w(15:nfft1) = 0;
 
 fprintf('Valores TF red2: 1 - 10 \n ');
 X_red2_w(1:10);
 fprintf(' - Eliminamos los primeros 35 componentes de TF \n');
 X_red2_w(1:35) = 0;
-fprintf('Valores TF red2: 1 - 10 \n\n');
+fprintf('Valores TF red2: 1 - 10 \n ');
 X_red2_w(1:10);
+fprintf(' - Eliminamos los ultimos componentes: "Pasabanda Manual" \n\n');
+X_red2_w(70:nfft2) = 0;
 
 fprintf('Valores TF red3: 1 - 10 \n ');
 X_red3_w(1:10);
 fprintf(' - Eliminamos los primeros 40 componentes de TF \n');
 X_red3_w(1:40) = 0;
-fprintf('Valores TF red3: 1 - 10 \n');
+fprintf('Valores TF red3: 1 - 10 \n ');
 X_red3_w(1:10);
+fprintf(' - Eliminamos los ultimos componentes: "Pasabanda Manual" \n\n');
+X_red3_w(80:nfft3) = 0;
+
+PICO_red1 = max(X_red1_w);
+PICO_red2 = max(X_red2_w);
+PICO_red3 = max(X_red3_w);
+
+BPS_red1 = 0;
+BPS_red2 = 0;
+BPS_red3 = 0;
+
+% Busqueda en la TF de la frecuencia a la que pertenezca cada Pico_red"n"
+disp('Waiting please MatLab is processing: Búsqueda de f(Hz)-> Pico_red1');
+for n=1 : 1 : nfft1
+    if(X_red1_w(n) == PICO_red1)
+        % Encontramos la f(Hz) a la que pertenece el Pico_1
+        BPS_red1 = dom1_W(n);
+    end
+end
+
+% Busqueda en la TF de la frecuencia a la que pertenezca cada Pico_red"n"
+disp('Waiting please MatLab is processing: Búsqueda de f(Hz)-> Pico_red2');
+for n=1 : 1 : nfft2
+    if(X_red2_w(n) == PICO_red2)
+        % Encontramos la f(Hz) a la que pertenece el Pico_2
+        BPS_red2 = dom2_W(n);
+    end
+end
+
+% Busqueda en la TF de la frecuencia a la que pertenezca cada Pico_red"n"
+disp('Waiting please MatLab is processing: Búsqueda de f(Hz)-> Pico_red3');
+for n=1 : 1 : nfft3
+    if(X_red3_w(n) == PICO_red3)
+        % Encontramos la f(Hz) a la que pertenece el Pico_3
+        BPS_red3 = dom3_W(n);
+    end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%% IMPRESIÓN DE RITMO CARDIACO %%%%%%%%%%%%%%%%%%%%%%%
+BPM_red1 = BPS_red1*60;
+BPM_red2 = BPS_red2*60;
+BPM_red3 = BPS_red3*60;
+
+disp(' + Resultados para el cálculo del Ritmo Cardiaco (Latidos/tiempo):');
+fprintf('Signal 1 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red1, BPM_red1);
+fprintf('Signal 2 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red2, BPM_red2);
+fprintf('Signal 3 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red3, BPM_red3);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -148,7 +207,7 @@ grid on % Cuadrícula Activada
 figure(2);  % TF de cada señal de cada archivo
 subplot(2, 3, 1) % Varias Graficas (2 filas, 3 columnas, 1ra posición)
 plot(dom1_W,X_ir1_w)  % Señal original: Oxi1
-xlim([0 ZOOM_TF1])  % Para hecer un zoom al espectro, ver los armonicos y la f0
+xlim([0 ZOOM_TF1])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: IR - señal 1') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
@@ -156,7 +215,7 @@ grid on % Cuadrícula Activada
 
 subplot(2, 3, 4) % Varias Graficas (2 filas, 3 columnas, 4ta posición)
 plot(dom1_W,X_red1_w, '-o')  % Señal original: Oxi1
-xlim([0 ZOOM_TF1])  % Para hecer un zoom al espectro, ver los armonicos y la f0
+xlim([0 ZOOM_TF1])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: RED - señal 1 (BPM)') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
@@ -164,7 +223,7 @@ grid on % Cuadrícula Activada
 
 subplot(2, 3, 2) % Varias Graficas (2 filas, 3 columnas, 2da posición)
 plot(dom2_W,X_ir2_w)  % Señal original: Oxi2
-xlim([0 ZOOM_TF2])  % Para hecer un zoom al espectro, ver los armonicos y la f0
+xlim([0 ZOOM_TF2])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: IR - señal 2') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
@@ -172,7 +231,7 @@ grid on % Cuadrícula Activada
 
 subplot(2, 3, 5) % Varias Graficas (2 filas, 3 columnas, 5ta posición)
 plot(dom2_W,X_red2_w, '-o')  % Señal original: Oxi2
-xlim([0 ZOOM_TF2])  % Para hecer un zoom al espectro, ver los armonicos y la f0
+xlim([0 ZOOM_TF2])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: RED - señal 2 (BPM)') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
@@ -180,7 +239,7 @@ grid on % Cuadrícula Activada
 
 subplot(2, 3, 3) % Varias Graficas (2 filas, 3 columnas, 3ra posición)
 plot(dom3_W,X_ir3_w)  % Señal original: Oxi3
-xlim([0 ZOOM_TF3])  % Para hecer un zoom al espectro, ver los armonicos y la f0
+xlim([0 ZOOM_TF3])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: IR - señal 3') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
@@ -188,7 +247,7 @@ grid on % Cuadrícula Activada
 
 subplot(2, 3, 6) % Varias Graficas (2 filas, 3 columnas, 6ta posición)
 plot(dom3_W,X_red3_w, '-o')  % Señal original: Oxi3
-xlim([0 ZOOM_TF3])  % Para hecer un zoom al espectro, ver los armonicos y la f0
+xlim([0 ZOOM_TF3])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: RED - señal 3 (BPM)') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
