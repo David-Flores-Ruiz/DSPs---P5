@@ -79,10 +79,20 @@ X_red3_w  = abs( fft(Struct_oxi3.x_red,nfft3) );
 
 
 
+%%%%%%%%%%%%%%%%%%% SALVAMOS AMPLITUD DE "DC" EN LA TF %%%%%%%%%%%%%%%%%%%%
+% AC_red1 = 0;              AC_red2 = 0;              AC_red3 = 0;
+DC_red1 = X_red1_w(1);    DC_red2 = X_red2_w(1);    DC_red3 = X_red3_w(1);
+
+% AC_ir1 = 0;               AC_ir2 = 0;               AC_ir3 = 0;
+DC_ir1 = X_ir1_w(1);      DC_ir2 = X_ir2_w(1);      DC_ir3 = X_ir3_w(1);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 %%%%%%%%%%%%%%%%% BÚSQUEDA DEL RITMO CARDIACO EN BPM y BPS %%%%%%%%%%%%%%%%
 fprintf('Valores TF red1: 1 - 10');
 X_red1_w(1:10)
-fprintf(' - Eliminamos los primeros  5 componentes de TF \n');
+fprintf(' - Eliminamos los primeros  5 componentes de TF red1\n');
 X_red1_w(1:5) = 0;
 fprintf('Valores TF red1: 1 - 10');
 X_red1_w(1:10)
@@ -91,7 +101,7 @@ X_red1_w(15:nfft1) = 0;
 
 fprintf('Valores TF red2: 1 - 10 \n ');
 X_red2_w(1:10);
-fprintf(' - Eliminamos los primeros 35 componentes de TF \n');
+fprintf(' - Eliminamos los primeros 35 componentes de TF red2\n');
 X_red2_w(1:35) = 0;
 fprintf('Valores TF red2: 1 - 10 \n ');
 X_red2_w(1:10);
@@ -100,7 +110,7 @@ X_red2_w(70:nfft2) = 0;
 
 fprintf('Valores TF red3: 1 - 10 \n ');
 X_red3_w(1:10);
-fprintf(' - Eliminamos los primeros 40 componentes de TF \n');
+fprintf(' - Eliminamos los primeros 40 componentes de TF red3\n');
 X_red3_w(1:40) = 0;
 fprintf('Valores TF red3: 1 - 10 \n ');
 X_red3_w(1:10);
@@ -154,6 +164,66 @@ disp(' + Resultados para el cálculo del Ritmo Cardiaco (Latidos/tiempo):');
 fprintf('Signal 1 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red1, BPM_red1);
 fprintf('Signal 2 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red2, BPM_red2);
 fprintf('Signal 3 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red3, BPM_red3);
+fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%% BÚSQUEDA DE LA AMPLITUD "AC" EN LA TF DE "IR" %%%%%%%%%%%%%%
+fprintf(' - Eliminamos los primeros  5 componentes de TF ir1\n');
+X_ir1_w(1:5) = 0;
+fprintf(' - Eliminamos los ultimos componentes: "Pasabanda Manual" \n\n');
+X_ir1_w(15:nfft1) = 0;
+
+fprintf(' - Eliminamos los primeros 35 componentes de TF ir2\n');
+X_ir2_w(1:35) = 0;
+fprintf(' - Eliminamos los ultimos componentes: "Pasabanda Manual" \n\n');
+X_ir2_w(70:nfft2) = 0;
+
+fprintf(' - Eliminamos los primeros 40 componentes de TF ir3\n');
+X_ir3_w(1:40) = 0;
+fprintf(' - Eliminamos los ultimos componentes: "Pasabanda Manual"   \n');
+X_ir3_w(80:nfft3) = 0;
+
+PICO_ir1 = max(X_ir1_w);
+PICO_ir2 = max(X_ir2_w);
+PICO_ir3 = max(X_ir3_w);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%% ASIGNAMOS LAS AMPLITUDES DE "AC" DE LA TF %%%%%%%%%%%%%%%%
+AC_red1 = PICO_red1;       AC_red2 = PICO_red2;       AC_red3 = PICO_red3;
+AC_ir1  = PICO_ir1;        AC_ir2  = PICO_ir2;        AC_ir3  = PICO_ir3;
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
+%%%%%% EQ1: CÁLCULO DEL OXÍGENO EN LA SANGRE SEGÚN RELACIÓN: (AC/DC) %%%%%%
+EQ1_Factor_R1 = (AC_red1/DC_red1) / (AC_ir1/DC_ir1);
+
+EQ1_Factor_R2 = (AC_red2/DC_red2) / (AC_ir2/DC_ir2);
+
+EQ1_Factor_R3 = (AC_red3/DC_red3) / (AC_ir3/DC_ir3);
+% fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
+%%%% EQ2: CÁLCULO DEL OXÍGENO EN LA SANGRE: log10(AC_red)/log10(AC_ir) %%%%
+EQ2_Factor_R1 = log10(AC_red1) / log10(AC_ir1)
+
+EQ2_Factor_R2 = log10(AC_red2) / log10(AC_ir2)
+
+EQ2_Factor_R3 = log10(AC_red3) / log10(AC_ir3)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%% IMPRESIÓN DEL NIVEL DE OXIGENACIÓN EN LA SANGRE %%%%%%%%%%%%%
+SpO2_1 = EQ2_Factor_R1*100;
+SpO2_2 = EQ2_Factor_R2*100;
+SpO2_3 = EQ2_Factor_R3*100;
+
+disp(' + Resultados para el cálculo del Nivel de Oxígeno en sangre(%):  ');
+fprintf('Signal 1 -> Nivel de Oxigeno = %.2f ',SpO2_1);   disp('%')
+fprintf('Signal 2 -> Nivel de Oxigeno = %.2f ',SpO2_2);   disp('%')
+fprintf('Signal 3 -> Nivel de Oxigeno = %.2f ',SpO2_3);   disp('%')
+fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -206,7 +276,7 @@ grid on % Cuadrícula Activada
 % Se GRAFICA las TF para cada uno de los 3 archivos originales
 figure(2);  % TF de cada señal de cada archivo
 subplot(2, 3, 1) % Varias Graficas (2 filas, 3 columnas, 1ra posición)
-plot(dom1_W,X_ir1_w)  % Señal original: Oxi1
+plot(dom1_W,X_ir1_w, '-*')  % Señal original: Oxi1
 xlim([0 ZOOM_TF1])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: IR - señal 1') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
@@ -222,7 +292,7 @@ ylabel('Amplitud Am')          % Nombre del eje Y
 grid on % Cuadrícula Activada
 
 subplot(2, 3, 2) % Varias Graficas (2 filas, 3 columnas, 2da posición)
-plot(dom2_W,X_ir2_w)  % Señal original: Oxi2
+plot(dom2_W,X_ir2_w, '-*')  % Señal original: Oxi2
 xlim([0 ZOOM_TF2])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: IR - señal 2') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
@@ -238,7 +308,7 @@ ylabel('Amplitud Am')          % Nombre del eje Y
 grid on % Cuadrícula Activada
 
 subplot(2, 3, 3) % Varias Graficas (2 filas, 3 columnas, 3ra posición)
-plot(dom3_W,X_ir3_w)  % Señal original: Oxi3
+plot(dom3_W,X_ir3_w, '-*')  % Señal original: Oxi3
 xlim([0 ZOOM_TF3])  % Hacer un zoom al espectro, ver los armonicos y la f0
 title('TFourier: IR - señal 3') % Titulo del gráfico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
