@@ -44,17 +44,19 @@ t3 = 0:step:(step*(sizeOxi3-1)); % Duración de n muestras en segundos: Oxi3
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% Diseño del filtro passa bandas con ventana triangular para eliminar rizo
+%filtro pasabandas para eliminar fecuencias indeseadas
 %48 ppm 
-wp = 0.8/ (Fs/2);
+wp = 0.8/ (Fs/2); %frecuencia de paso mínima = 0.8 Hz eliminando 
+                  %la componente de directa
 %240 ppm
-wr= 4/(Fs/2);
+wr= 3.5/(Fs/2);   %frecuencia de paso máxima = 3.5 Hz, medicamente no hay 
+%pulsaciones saludables de más de 200ppm -> 3.33 Hz
 % Filtro pasa bandas
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-bandpass = fir1(100,[wp wr], 'bandpass', triang(101));
+%%%%%%%%%%%%%de 100 puntos, ventana triangular
+bandpass = fir1(100,[wp wr], 'bandpass', triang(101)); 
 freqz(bandpass); title('filtro pasa bandas');
 
-%aplicamos el filtro pasabanda  a nuestras señales
+%%=======aplicamos el filtro pasabanda  a nuestras señales Red e IR=====%%%
 
 p_banda_red_1 = filter(bandpass,1,Struct_oxi1.x_red);
 p_banda_ir_1 = filter(bandpass,1,Struct_oxi1.x_ir);
@@ -225,11 +227,16 @@ PICO_ir3 = max(X_ir3_w);
 
 %%%%% obtención de los valores de AC
 %%%==============================señal 1===============================%%%
-max_value_red = abs(findpeaks(p_banda_red_1));
+
+%encontramos los valores máximos y mínimos con la función findpeaks luego
+%de esto, obtenemos un promedio de los minimos y máximos con mean(), 
+%estos valores los restamos para así encontrar la amplitud real de AC de 
+%la señal, se realiza este calculo para las 3 señales con sus 
+%respectivos R e IR.
+
+max_value_red = abs(findpeaks(p_banda_red_1));  
 prom_max_red = mean(max_value_red);
  
-% Findpeaks encuentra los máximos relativos, para su uso es necesario 
-% hacer un promedio de los picos maximos
 max_value_ir = abs(findpeaks(p_banda_ir_1));
 prom_max_ir = mean(max_value_ir);
  
@@ -259,12 +266,11 @@ prom_min_ir = mean(min_value_ir);
  
 AC_red_1 = abs(prom_max_red - prom_min_red);
 AC_ir_1 = abs(prom_max_ir- prom_min_ir);
-
+%%%guardamos los valores obtenidos
 AC_red2 = AC_red_1;
 AC_ir2  = AC_ir_1;
 
-
-%%%==============================señal 2===============================%%%
+%%%==============================señal 3===============================%%%
 max_value_red = abs(findpeaks(p_banda_red_3));
 prom_max_red = mean(max_value_red);
  
@@ -279,7 +285,7 @@ prom_min_ir = mean(min_value_ir);
  
 AC_red_1 = abs(prom_max_red - prom_min_red);
 AC_ir_1 = abs(prom_max_ir- prom_min_ir);
-
+%%%guardamos los valores obtenidos
 AC_red3 = AC_red_1;
 AC_ir3  = AC_ir_1;
 
@@ -307,14 +313,10 @@ EQ2_Factor_R2 = log10(AC_red2) / log10(AC_ir2)
 
 EQ2_Factor_R3 = log10(AC_red3) / log10(AC_ir3)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
+%se decide utilizar la ecuación 2 ya que de esta se obtienen los mejores
+%resultados de R para el cálculo de porcentaje de oxigeno
 
 %%%%%%%%%%%%% IMPRESIÓN DEL NIVEL DE OXIGENACIÓN EN LA SANGRE %%%%%%%%%%%%%
-% SpO2_1 = EQ2_Factor_R1*100;
-% SpO2_2 = EQ2_Factor_R2*100;
-% SpO2_3 = EQ2_Factor_R3*100;
-
 SpO2_1 = 110 - EQ2_Factor_R1*25;
 SpO2_2 = 110 - EQ2_Factor_R2*25;
 SpO2_3 = 110 - EQ2_Factor_R3*25;
