@@ -7,7 +7,6 @@
 % oxígeno en la sangre, procesando las señales correspondientes en MatLab %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clc
 clear all;
 close all;
 
@@ -37,6 +36,10 @@ fprintf('Tamaño del arreglo Oxi1:  ');      disp(sizeOxi1);
 fprintf('Tamaño del arreglo Oxi2:  ');      disp(sizeOxi2);
 fprintf('Tamaño del arreglo Oxi3:  ');      disp(sizeOxi3);
 
+% Struct_oxi3.x_ir(1:(sizeOxi3/2)) = 0;
+% Struct_oxi3.x_ir((sizeOxi3/2):sizeOxi3) = 0;
+% newSignaltime3 = Struct_oxi3.x_ir((1+sizeOxi3/2):sizeOxi3);
+
 step = 1/Fs;          % Paso de tiempo de 1/25Hz = 40ms
 t1 = 0:step:(step*(sizeOxi1-1)); % Duración de n muestras en segundos: Oxi1
 t2 = 0:step:(step*(sizeOxi2-1)); % Duración de n muestras en segundos: Oxi2
@@ -45,15 +48,16 @@ t3 = 0:step:(step*(sizeOxi3-1)); % Duración de n muestras en segundos: Oxi3
 
 
 %filtro pasabandas para eliminar fecuencias indeseadas
-%48 ppm 
-wp = 0.8/ (Fs/2); %frecuencia de paso mínima = 0.8 Hz eliminando 
-                  %la componente de directa
+%48 ppm
+wp = 1.0/(Fs/2); %frecuencia de paso mínima = 0.8 Hz eliminando
+                 %la componente de directa
 %240 ppm
-wr= 3.5/(Fs/2);   %frecuencia de paso máxima = 3.5 Hz, medicamente no hay 
-%pulsaciones saludables de más de 200ppm -> 3.33 Hz
+wr = 3.0/(Fs/2);   %frecuencia de paso máxima = 3.5 Hz, medicamente no hay 
+                  %pulsaciones saludables de más de 200ppm -> 3.33 Hz
+                  
 % Filtro pasa bandas
 %%%%%%%%%%%%%de 100 puntos, ventana triangular
-bandpass = fir1(100,[wp wr], 'bandpass', triang(101)); 
+bandpass = fir1(100,[wp wr]); 
 freqz(bandpass); title('filtro pasa bandas');
 
 %%=======aplicamos el filtro pasabanda  a nuestras señales Red e IR=====%%%
@@ -101,13 +105,14 @@ step3_W = Fs/(nfft3-1);   % frecuencia de muestreo / numero de puntos de TF
 
 % Construccion del vector de frecuencias para usar en plot()
 dom3_W  = 0 : step3_W : Fs; % Escala de frecuencia en "Hz"
+% dom3_W_mitad = 0 : step3_W*2 : Fs; % Escala de frecuencia en "Hz"
 
 % Primero se obtiene la magnitud de la transformada de Fourier FFT; de
 % manera que el largo de la FFT sea nfft 
 % X_ir3_w   = abs( fft(Struct_oxi3.x_ir, nfft3) );
 % X_red3_w  = abs( fft(Struct_oxi3.x_red,nfft3) );
 
- X_ir3_w   = abs( fft(p_banda_ir_3, nfft3) );
+ X_ir3_w   = abs( fft(p_banda_ir_3, nfft3) ); % New signal: mitad derecha
  X_red3_w  = abs( fft(p_banda_red_3,nfft3) );
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -249,7 +254,8 @@ prom_min_ir = mean(min_value_ir);
 AC_red_1 = abs(prom_max_red - prom_min_red);
 AC_ir_1 = abs(prom_max_ir- prom_min_ir);
 %%%guardamos los valores obtenidos
-AC_red1 = AC_red_1;  AC_ir1  = AC_ir_1; 
+AC_red1 = AC_red_1;  
+AC_ir1  = AC_ir_1; 
 
 %%%==============================señal 2===============================%%%
 max_value_red = abs(findpeaks(p_banda_red_2));
@@ -264,11 +270,11 @@ prom_min_red = mean(min_value_red);
 min_value_ir = abs(findpeaks(-p_banda_ir_2));
 prom_min_ir = mean(min_value_ir);
  
-AC_red_1 = abs(prom_max_red - prom_min_red);
-AC_ir_1 = abs(prom_max_ir- prom_min_ir);
+AC_red_2 = abs(prom_max_red - prom_min_red);
+AC_ir_2 = abs(prom_max_ir- prom_min_ir);
 %%%guardamos los valores obtenidos
-AC_red2 = AC_red_1;
-AC_ir2  = AC_ir_1;
+AC_red2 = AC_red_2;
+AC_ir2  = AC_ir_2;
 
 %%%==============================señal 3===============================%%%
 max_value_red = abs(findpeaks(p_banda_red_3));
@@ -283,17 +289,17 @@ prom_min_red = mean(min_value_red);
 min_value_ir = abs(findpeaks(-p_banda_ir_3));
 prom_min_ir = mean(min_value_ir);
  
-AC_red_1 = abs(prom_max_red - prom_min_red);
-AC_ir_1 = abs(prom_max_ir- prom_min_ir);
+AC_red_3 = abs(prom_max_red - prom_min_red);
+AC_ir_3 = abs(prom_max_ir- prom_min_ir);
 %%%guardamos los valores obtenidos
-AC_red3 = AC_red_1;
-AC_ir3  = AC_ir_1;
+AC_red3 = AC_red_3;
+AC_ir3  = AC_ir_3;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%% ASIGNAMOS LAS AMPLITUDES DE "AC" DE LA TF %%%%%%%%%%%%%%%%
-% AC_red1 = AC_red_1;       AC_red2 = PICO_red2;       AC_red3 = PICO_red3;
-% AC_ir1  = AC_ir_1;        AC_ir2  = PICO_ir2;        AC_ir3  = PICO_ir3;
+% AC_red1 = PICO_red1;       AC_red2 = PICO_red2;       AC_red3 = PICO_red3;
+% AC_ir1  = PICO_ir1;        AC_ir2  = PICO_ir2;        AC_ir3  = PICO_ir3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -317,14 +323,24 @@ EQ2_Factor_R3 = log10(AC_red3) / log10(AC_ir3)
 %resultados de R para el cálculo de porcentaje de oxigeno
 
 %%%%%%%%%%%%% IMPRESIÓN DEL NIVEL DE OXIGENACIÓN EN LA SANGRE %%%%%%%%%%%%%
-SpO2_1 = 110 - EQ2_Factor_R1*25;
-SpO2_2 = 110 - EQ2_Factor_R2*25;
-SpO2_3 = 110 - EQ2_Factor_R3*25;
+EQ1_SpO2_1 = 110 - EQ1_Factor_R1*25;
+EQ1_SpO2_2 = 110 - EQ1_Factor_R2*25;
+EQ1_SpO2_3 = 110 - EQ1_Factor_R3*25;
 
-disp(' + Resultados para el cálculo del Nivel de Oxígeno en sangre(%):  ');
-fprintf('Signal 1 -> Nivel de Oxigeno = %.2f ',SpO2_1);   disp('%')
-fprintf('Signal 2 -> Nivel de Oxigeno = %.2f ',SpO2_2);   disp('%')
-fprintf('Signal 3 -> Nivel de Oxigeno = %.2f ',SpO2_3);   disp('%')
+disp('+Resultados para el cálculo del Nivel de Oxígeno en sangre(%) EQ1:');
+fprintf('Signal 1 -> Nivel de Oxigeno = %.2f ',EQ1_SpO2_1);   disp('%')
+fprintf('Signal 2 -> Nivel de Oxigeno = %.2f ',EQ1_SpO2_2);   disp('%')
+fprintf('Signal 3 -> Nivel de Oxigeno = %.2f ',EQ1_SpO2_3);   disp('%')
+fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
+
+EQ2_SpO2_1 = 110 - EQ2_Factor_R1*25;
+EQ2_SpO2_2 = 110 - EQ2_Factor_R2*25;
+EQ2_SpO2_3 = 110 - EQ2_Factor_R3*25;
+
+disp('+Resultados para el cálculo del Nivel de Oxígeno en sangre(%) EQ2:');
+fprintf('Signal 1 -> Nivel de Oxigeno = %.2f ',EQ2_SpO2_1);   disp('%')
+fprintf('Signal 2 -> Nivel de Oxigeno = %.2f ',EQ2_SpO2_2);   disp('%')
+fprintf('Signal 3 -> Nivel de Oxigeno = %.2f ',EQ2_SpO2_3);   disp('%')
 fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
