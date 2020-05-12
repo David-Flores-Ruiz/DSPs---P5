@@ -114,10 +114,10 @@ dom3_W  = 0 : step3_W : Fs; % Escala de frecuencia en "Hz"
 
 %%%%%%%%%%%%%%%%%%% SALVAMOS AMPLITUD DE "DC" EN LA TF %%%%%%%%%%%%%%%%%%%%
 % AC_red1 = 0;              AC_red2 = 0;              AC_red3 = 0;
-DC_red1 = X_red1_w(1);    DC_red2 = X_red2_w(1);    DC_red3 = X_red3_w(1);
+DC_red1 = abs(X_red1_w(1));    DC_red2 = abs(X_red2_w(1));    DC_red3 = abs(X_red3_w(1));
 
 % AC_ir1 = 0;               AC_ir2 = 0;               AC_ir3 = 0;
-DC_ir1 = X_ir1_w(1);      DC_ir2 = X_ir2_w(1);      DC_ir3 = X_ir3_w(1);
+DC_ir1 = abs(X_ir1_w(1));      DC_ir2 = abs(X_ir2_w(1));      DC_ir3 = abs(X_ir3_w(1));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -223,11 +223,74 @@ PICO_ir2 = max(X_ir2_w);
 PICO_ir3 = max(X_ir3_w);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%% obtención de los valores de AC
+%%%==============================señal 1===============================%%%
+max_value_red = abs(findpeaks(p_banda_red_1));
+prom_max_red = mean(max_value_red);
+ 
+% Findpeaks encuentra los máximos relativos, para su uso es necesario 
+% hacer un promedio de los picos maximos
+max_value_ir = abs(findpeaks(p_banda_ir_1));
+prom_max_ir = mean(max_value_ir);
+ 
+min_value_red = abs(findpeaks(-p_banda_red_1));
+prom_min_red = mean(min_value_red);
+ 
+min_value_ir = abs(findpeaks(-p_banda_ir_1));
+prom_min_ir = mean(min_value_ir);
+ 
+AC_red_1 = abs(prom_max_red - prom_min_red);
+AC_ir_1 = abs(prom_max_ir- prom_min_ir);
+%%%guardamos los valores obtenidos
+AC_red1 = AC_red_1;  AC_ir1  = AC_ir_1; 
 
+%%%==============================señal 2===============================%%%
+max_value_red = abs(findpeaks(p_banda_red_2));
+prom_max_red = mean(max_value_red);
+ 
+max_value_ir = abs(findpeaks(p_banda_ir_2));
+prom_max_ir = mean(max_value_ir);
+ 
+min_value_red = abs(findpeaks(-p_banda_red_2));
+prom_min_red = mean(min_value_red);
+ 
+min_value_ir = abs(findpeaks(-p_banda_ir_2));
+prom_min_ir = mean(min_value_ir);
+ 
+AC_red_1 = abs(prom_max_red - prom_min_red);
+AC_ir_1 = abs(prom_max_ir- prom_min_ir);
+
+AC_red2 = AC_red_1;
+AC_ir2  = AC_ir_1;
+
+
+%%%==============================señal 2===============================%%%
+max_value_red = abs(findpeaks(p_banda_red_3));
+prom_max_red = mean(max_value_red);
+ 
+max_value_ir = abs(findpeaks(p_banda_ir_3));
+prom_max_ir = mean(max_value_ir);
+ 
+min_value_red = abs(findpeaks(-p_banda_red_3));
+prom_min_red = mean(min_value_red);
+ 
+min_value_ir = abs(findpeaks(-p_banda_ir_3));
+prom_min_ir = mean(min_value_ir);
+ 
+AC_red_1 = abs(prom_max_red - prom_min_red);
+AC_ir_1 = abs(prom_max_ir- prom_min_ir);
+
+AC_red3 = AC_red_1;
+AC_ir3  = AC_ir_1;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%% ASIGNAMOS LAS AMPLITUDES DE "AC" DE LA TF %%%%%%%%%%%%%%%%
-AC_red1 = PICO_red1;       AC_red2 = PICO_red2;       AC_red3 = PICO_red3;
-AC_ir1  = PICO_ir1;        AC_ir2  = PICO_ir2;        AC_ir3  = PICO_ir3;
+% AC_red1 = AC_red_1;       AC_red2 = PICO_red2;       AC_red3 = PICO_red3;
+% AC_ir1  = AC_ir_1;        AC_ir2  = PICO_ir2;        AC_ir3  = PICO_ir3;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
 %%%%%% EQ1: CÁLCULO DEL OXÍGENO EN LA SANGRE SEGÚN RELACIÓN: (AC/DC) %%%%%%
 EQ1_Factor_R1 = (AC_red1/DC_red1) / (AC_ir1/DC_ir1)
@@ -248,9 +311,13 @@ EQ2_Factor_R3 = log10(AC_red3) / log10(AC_ir3)
 
 
 %%%%%%%%%%%%% IMPRESIÓN DEL NIVEL DE OXIGENACIÓN EN LA SANGRE %%%%%%%%%%%%%
-SpO2_1 = EQ2_Factor_R1*100;
-SpO2_2 = EQ2_Factor_R2*100;
-SpO2_3 = EQ2_Factor_R3*100;
+% SpO2_1 = EQ2_Factor_R1*100;
+% SpO2_2 = EQ2_Factor_R2*100;
+% SpO2_3 = EQ2_Factor_R3*100;
+
+SpO2_1 = 110 - EQ2_Factor_R1*25;
+SpO2_2 = 110 - EQ2_Factor_R2*25;
+SpO2_3 = 110 - EQ2_Factor_R3*25;
 
 disp(' + Resultados para el cálculo del Nivel de Oxígeno en sangre(%):  ');
 fprintf('Signal 1 -> Nivel de Oxigeno = %.2f ',SpO2_1);   disp('%')
