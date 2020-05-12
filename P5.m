@@ -1,18 +1,21 @@
-%%%%%%%%%%%%%%%% P5 de DSP's: "C√ÅLCULO DEL RITMO CARDIACO %%%%%%%%%%%%%%%%%
-%                  Y DEL NIVEL DE OX√çGENO EN LA SANGRE"                   %
+%%%%%%%%%%%%%%%% P5 de DSP's: "C¡LCULO DEL RITMO CARDIACO %%%%%%%%%%%%%%%%%
+%                  Y DEL NIVEL DE OXÕGENO EN LA SANGRE"                   %
 %                                                                         %
-%   Realizar el c√°lculo del ritmo cardiaco y del nivel de saturaci√≥n del  %
-% ox√≠geno en la sangre, procesando las se√±ales correspondientes en MatLab %
+%                       David Flores                                      %
+%                       Javier Ch·vez                                     %
+%   Realizar el c·lculo del ritmo cardiaco y del nivel de saturaciÛn del  %
+% oxÌgeno en la sangre, procesando las seÒales correspondientes en MatLab %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+clc
 clear all;
 close all;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  DEFINES  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MORE_POINTS = 1;    % Factor para definir mayor n√∫mero de puntos en la TF
-ZOOM_TF1 = 3;  % Para un acercamiento a la gr√°fica, esperamos f0 = 1.25Hz
-ZOOM_TF2 = 3;  % Para un acercamiento a la gr√°fica, esperamos f0 = 1.25Hz
-ZOOM_TF3 = 3;  % Para un acercamiento a la gr√°fica, esperamos f0 = 1.25Hz
+MORE_POINTS = 1;    % Factor para definir mayor n˙mero de puntos en la TF
+ZOOM_TF1 = 3;  % Para un acercamiento a la gr·fica, esperamos f0 = 1.25Hz
+ZOOM_TF2 = 3;  % Para un acercamiento a la gr·fica, esperamos f0 = 1.25Hz
+ZOOM_TF3 = 3;  % Para un acercamiento a la gr·fica, esperamos f0 = 1.25Hz
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -30,17 +33,37 @@ sizeOxi1 = length(Struct_oxi1.x_ir);      % Es igual a: x_red
 sizeOxi2 = length(Struct_oxi2.x_ir);      % Es igual a: x_red
 sizeOxi3 = length(Struct_oxi3.x_ir);      % Es igual a: x_red
 
-fprintf('Tama√±o del arreglo Oxi1:  ');      disp(sizeOxi1);
-fprintf('Tama√±o del arreglo Oxi2:  ');      disp(sizeOxi2);
-fprintf('Tama√±o del arreglo Oxi3:  ');      disp(sizeOxi3);
+fprintf('TamaÒo del arreglo Oxi1:  ');      disp(sizeOxi1);
+fprintf('TamaÒo del arreglo Oxi2:  ');      disp(sizeOxi2);
+fprintf('TamaÒo del arreglo Oxi3:  ');      disp(sizeOxi3);
 
 step = 1/Fs;          % Paso de tiempo de 1/25Hz = 40ms
-t1 = 0:step:(step*(sizeOxi1-1)); % Duraci√≥n de n muestras en segundos: Oxi1
-t2 = 0:step:(step*(sizeOxi2-1)); % Duraci√≥n de n muestras en segundos: Oxi2
-t3 = 0:step:(step*(sizeOxi3-1)); % Duraci√≥n de n muestras en segundos: Oxi3
+t1 = 0:step:(step*(sizeOxi1-1)); % DuraciÛn de n muestras en segundos: Oxi1
+t2 = 0:step:(step*(sizeOxi2-1)); % DuraciÛn de n muestras en segundos: Oxi2
+t3 = 0:step:(step*(sizeOxi3-1)); % DuraciÛn de n muestras en segundos: Oxi3
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+% DiseÒo del filtro passa bandas con ventana triangular para eliminar rizo
+%48 ppm 
+wp = 0.8/ (Fs/2);
+%240 ppm
+wr= 4/(Fs/2);
+% Filtro pasa bandas
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+bandpass = fir1(100,[wp wr], 'bandpass', triang(101));
+freqz(bandpass); title('filtro pasa bandas');
+
+%aplicamos el filtro pasabanda  a nuestras seÒales
+
+p_banda_red_1 = filter(bandpass,1,Struct_oxi1.x_red);
+p_banda_ir_1 = filter(bandpass,1,Struct_oxi1.x_ir);
+
+p_banda_red_2 = filter(bandpass,1,Struct_oxi2.x_red);
+p_banda_ir_2 = filter(bandpass,1,Struct_oxi2.x_ir);
+
+p_banda_red_3 = filter(bandpass,1,Struct_oxi3.x_red);
+p_banda_ir_3 = filter(bandpass,1,Struct_oxi3.x_ir);
 
 %%%%%%%%%%%%%%%%%%%%%%%% TRANSFORMADAS DE FOURIER %%%%%%%%%%%%%%%%%%%%%%%%%
 nfft1 = sizeOxi1*MORE_POINTS;   % el numero de puntos de la fft
@@ -51,8 +74,10 @@ dom1_W  = 0 : step1_W : Fs; % Escala de frecuencia en "Hz"
 
 % Primero se obtiene la magnitud de la transformada de Fourier FFT; de
 % manera que el largo de la FFT sea nfft 
-X_ir1_w   = abs( fft(Struct_oxi1.x_ir, nfft1) );
-X_red1_w  = abs( fft(Struct_oxi1.x_red,nfft1) );
+% X_ir1_w   = abs( fft(Struct_oxi1.x_ir, nfft1) );
+% X_red1_w  = abs( fft(Struct_oxi1.x_red,nfft1) );
+X_ir1_w   = abs( fft(p_banda_ir_1, nfft1) );
+X_red1_w  = abs( fft(p_banda_red_1,nfft1) );
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
 nfft2 = sizeOxi2*MORE_POINTS;   % el numero de puntos de la fft
 step2_W = Fs/(nfft2-1);   % frecuencia de muestreo / numero de puntos de TF
@@ -62,8 +87,12 @@ dom2_W  = 0 : step2_W : Fs; % Escala de frecuencia en "Hz"
 
 % Primero se obtiene la magnitud de la transformada de Fourier FFT; de
 % manera que el largo de la FFT sea nfft 
-X_ir2_w   = abs( fft(Struct_oxi2.x_ir, nfft2) );
-X_red2_w  = abs( fft(Struct_oxi2.x_red,nfft2) );
+% X_ir2_w   = abs( fft(Struct_oxi2.x_ir, nfft2) );
+% X_red2_w  = abs( fft(Struct_oxi2.x_red,nfft2) );
+
+X_ir2_w   = abs( fft(p_banda_ir_2, nfft2) );
+X_red2_w  = abs( fft(p_banda_red_2,nfft2) );
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
 nfft3 = sizeOxi3*MORE_POINTS;   % el numero de puntos de la fft
 step3_W = Fs/(nfft3-1);   % frecuencia de muestreo / numero de puntos de TF
@@ -73,8 +102,12 @@ dom3_W  = 0 : step3_W : Fs; % Escala de frecuencia en "Hz"
 
 % Primero se obtiene la magnitud de la transformada de Fourier FFT; de
 % manera que el largo de la FFT sea nfft 
-X_ir3_w   = abs( fft(Struct_oxi3.x_ir, nfft3) );
-X_red3_w  = abs( fft(Struct_oxi3.x_red,nfft3) );
+% X_ir3_w   = abs( fft(Struct_oxi3.x_ir, nfft3) );
+% X_red3_w  = abs( fft(Struct_oxi3.x_red,nfft3) );
+
+ X_ir3_w   = abs( fft(p_banda_ir_3, nfft3) );
+ X_red3_w  = abs( fft(p_banda_red_3,nfft3) );
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -89,7 +122,7 @@ DC_ir1 = X_ir1_w(1);      DC_ir2 = X_ir2_w(1);      DC_ir3 = X_ir3_w(1);
 
 
 
-%%%%%%%%%%%%%%%%% B√öSQUEDA DEL RITMO CARDIACO EN BPM y BPS %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% B⁄SQUEDA DEL RITMO CARDIACO EN BPM y BPS %%%%%%%%%%%%%%%%
 fprintf('Valores TF red1: 1 - 10');
 X_red1_w(1:10)
 fprintf(' - Eliminamos los primeros  5 componentes de TF red1\n');
@@ -126,7 +159,7 @@ BPS_red2 = 0;
 BPS_red3 = 0;
 
 % Busqueda en la TF de la frecuencia a la que pertenezca cada Pico_red"n"
-disp('Waiting please MatLab is processing: B√∫squeda de f(Hz)-> Pico_red1');
+disp('Waiting please MatLab is processing: B˙squeda de f(Hz)-> Pico_red1');
 for n=1 : 1 : nfft1
     if(X_red1_w(n) == PICO_red1)
         % Encontramos la f(Hz) a la que pertenece el Pico_1
@@ -135,7 +168,7 @@ for n=1 : 1 : nfft1
 end
 
 % Busqueda en la TF de la frecuencia a la que pertenezca cada Pico_red"n"
-disp('Waiting please MatLab is processing: B√∫squeda de f(Hz)-> Pico_red2');
+disp('Waiting please MatLab is processing: B˙squeda de f(Hz)-> Pico_red2');
 for n=1 : 1 : nfft2
     if(X_red2_w(n) == PICO_red2)
         % Encontramos la f(Hz) a la que pertenece el Pico_2
@@ -144,7 +177,7 @@ for n=1 : 1 : nfft2
 end
 
 % Busqueda en la TF de la frecuencia a la que pertenezca cada Pico_red"n"
-disp('Waiting please MatLab is processing: B√∫squeda de f(Hz)-> Pico_red3');
+disp('Waiting please MatLab is processing: B˙squeda de f(Hz)-> Pico_red3');
 for n=1 : 1 : nfft3
     if(X_red3_w(n) == PICO_red3)
         % Encontramos la f(Hz) a la que pertenece el Pico_3
@@ -155,12 +188,12 @@ end
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%% IMPRESI√ìN DE RITMO CARDIACO %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% IMPRESI”N DE RITMO CARDIACO %%%%%%%%%%%%%%%%%%%%%%%
 BPM_red1 = BPS_red1*60;
 BPM_red2 = BPS_red2*60;
 BPM_red3 = BPS_red3*60;
 
-disp(' + Resultados para el c√°lculo del Ritmo Cardiaco (Latidos/tiempo):');
+disp(' + Resultados para el c·lculo del Ritmo Cardiaco (Latidos/tiempo):');
 fprintf('Signal 1 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red1, BPM_red1);
 fprintf('Signal 2 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red2, BPM_red2);
 fprintf('Signal 3 -> BPSec = %.2fHz - BPMin = %.2f \n',BPS_red3, BPM_red3);
@@ -169,7 +202,7 @@ fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
 
 
 
-%%%%%%%%%%%%%% B√öSQUEDA DE LA AMPLITUD "AC" EN LA TF DE "IR" %%%%%%%%%%%%%%
+%%%%%%%%%%%%%% B⁄SQUEDA DE LA AMPLITUD "AC" EN LA TF DE "IR" %%%%%%%%%%%%%%
 fprintf(' - Eliminamos los primeros  5 componentes de TF ir1\n');
 X_ir1_w(1:5) = 0;
 fprintf(' - Eliminamos los ultimos componentes: "Pasabanda Manual" \n\n');
@@ -196,15 +229,15 @@ PICO_ir3 = max(X_ir3_w);
 AC_red1 = PICO_red1;       AC_red2 = PICO_red2;       AC_red3 = PICO_red3;
 AC_ir1  = PICO_ir1;        AC_ir2  = PICO_ir2;        AC_ir3  = PICO_ir3;
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
-%%%%%% EQ1: C√ÅLCULO DEL OX√çGENO EN LA SANGRE SEG√öN RELACI√ìN: (AC/DC) %%%%%%
-EQ1_Factor_R1 = (AC_red1/DC_red1) / (AC_ir1/DC_ir1);
+%%%%%% EQ1: C¡LCULO DEL OXÕGENO EN LA SANGRE SEG⁄N RELACI”N: (AC/DC) %%%%%%
+EQ1_Factor_R1 = (AC_red1/DC_red1) / (AC_ir1/DC_ir1)
 
-EQ1_Factor_R2 = (AC_red2/DC_red2) / (AC_ir2/DC_ir2);
+EQ1_Factor_R2 = (AC_red2/DC_red2) / (AC_ir2/DC_ir2)
 
-EQ1_Factor_R3 = (AC_red3/DC_red3) / (AC_ir3/DC_ir3);
+EQ1_Factor_R3 = (AC_red3/DC_red3) / (AC_ir3/DC_ir3)
 % fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
-%%%% EQ2: C√ÅLCULO DEL OX√çGENO EN LA SANGRE: log10(AC_red)/log10(AC_ir) %%%%
+%%%% EQ2: C¡LCULO DEL OXÕGENO EN LA SANGRE: log10(AC_red)/log10(AC_ir) %%%%
 EQ2_Factor_R1 = log10(AC_red1) / log10(AC_ir1)
 
 EQ2_Factor_R2 = log10(AC_red2) / log10(AC_ir2)
@@ -214,12 +247,12 @@ EQ2_Factor_R3 = log10(AC_red3) / log10(AC_ir3)
 
 
 
-%%%%%%%%%%%%% IMPRESI√ìN DEL NIVEL DE OXIGENACI√ìN EN LA SANGRE %%%%%%%%%%%%%
+%%%%%%%%%%%%% IMPRESI”N DEL NIVEL DE OXIGENACI”N EN LA SANGRE %%%%%%%%%%%%%
 SpO2_1 = EQ2_Factor_R1*100;
 SpO2_2 = EQ2_Factor_R2*100;
 SpO2_3 = EQ2_Factor_R3*100;
 
-disp(' + Resultados para el c√°lculo del Nivel de Ox√≠geno en sangre(%):  ');
+disp(' + Resultados para el c·lculo del Nivel de OxÌgeno en sangre(%):  ');
 fprintf('Signal 1 -> Nivel de Oxigeno = %.2f ',SpO2_1);   disp('%')
 fprintf('Signal 2 -> Nivel de Oxigeno = %.2f ',SpO2_2);   disp('%')
 fprintf('Signal 3 -> Nivel de Oxigeno = %.2f ',SpO2_3);   disp('%')
@@ -230,96 +263,96 @@ fprintf(' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Se GRAFICA las salidas de cada uno de los 3 archivos originales
-figure(1);  % Grafica de la se√±al orginal de cada archivo
-subplot(2, 3, 1) % Varias Graficas (2 filas, 3 columnas, 1ra posici√≥n)
-plot(t1,Struct_oxi1.x_ir)  % Se√±al original: Oxi1
-title('IR - se√±al 1') % Titulo del gr√°fico
+figure(1);  % Grafica de la seÒal orginal de cada archivo
+subplot(2, 3, 1) % Varias Graficas (2 filas, 3 columnas, 1ra posiciÛn)
+plot(t1,Struct_oxi1.x_ir)  % SeÒal original: Oxi1
+title('IR - seÒal 1') % Titulo del gr·fico
 xlabel('tiempo (s)') % Nombre del eje X
 ylabel('Amplitud Am')% Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 4) % Varias Graficas (2 filas, 3 columnas, 4ta posici√≥n)
-plot(t1,Struct_oxi1.x_red)  % Se√±al original: Oxi1
-title('RED - se√±al 1 (BPM)') % Titulo del gr√°fico
+subplot(2, 3, 4) % Varias Graficas (2 filas, 3 columnas, 4ta posiciÛn)
+plot(t1,Struct_oxi1.x_red)  % SeÒal original: Oxi1
+title('RED - seÒal 1 (BPM)') % Titulo del gr·fico
 xlabel('tiempo (s)') % Nombre del eje X
 ylabel('Amplitud Am')% Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 2) % Varias Graficas (2 filas, 3 columnas, 2da posici√≥n)
-plot(t2,Struct_oxi2.x_ir)  % Se√±al original: Oxi2
-title('IR - se√±al 2') % Titulo del gr√°fico
+subplot(2, 3, 2) % Varias Graficas (2 filas, 3 columnas, 2da posiciÛn)
+plot(t2,Struct_oxi2.x_ir)  % SeÒal original: Oxi2
+title('IR - seÒal 2') % Titulo del gr·fico
 xlabel('tiempo (s)') % Nombre del eje X
 ylabel('Amplitud Am')% Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 5) % Varias Graficas (2 filas, 3 columnas, 5ta posici√≥n)
-plot(t2,Struct_oxi2.x_red)  % Se√±al original: Oxi2
-title('RED - se√±al 2 (BPM)') % Titulo del gr√°fico
+subplot(2, 3, 5) % Varias Graficas (2 filas, 3 columnas, 5ta posiciÛn)
+plot(t2,Struct_oxi2.x_red)  % SeÒal original: Oxi2
+title('RED - seÒal 2 (BPM)') % Titulo del gr·fico
 xlabel('tiempo (s)') % Nombre del eje X
 ylabel('Amplitud Am')% Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 3) % Varias Graficas (2 filas, 3 columnas, 3ra posici√≥n)
-plot(t3,Struct_oxi3.x_ir)  % Se√±al original: Oxi3
-title('IR - se√±al 3') % Titulo del gr√°fico
+subplot(2, 3, 3) % Varias Graficas (2 filas, 3 columnas, 3ra posiciÛn)
+plot(t3,Struct_oxi3.x_ir)  % SeÒal original: Oxi3
+title('IR - seÒal 3') % Titulo del gr·fico
 xlabel('tiempo (s)') % Nombre del eje X
 ylabel('Amplitud Am')% Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 6) % Varias Graficas (2 filas, 3 columnas, 6ta posici√≥n)
-plot(t3,Struct_oxi3.x_red)  % Se√±al original: Oxi3
-title('RED - se√±al 3 (BPM)') % Titulo del gr√°fico
+subplot(2, 3, 6) % Varias Graficas (2 filas, 3 columnas, 6ta posiciÛn)
+plot(t3,Struct_oxi3.x_red)  % SeÒal original: Oxi3
+title('RED - seÒal 3 (BPM)') % Titulo del gr·fico
 xlabel('tiempo (s)') % Nombre del eje X
 ylabel('Amplitud Am')% Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - %
 % Se GRAFICA las TF para cada uno de los 3 archivos originales
-figure(2);  % TF de cada se√±al de cada archivo
-subplot(2, 3, 1) % Varias Graficas (2 filas, 3 columnas, 1ra posici√≥n)
-plot(dom1_W,X_ir1_w, '-*')  % Se√±al original: Oxi1
+figure(2);  % TF de cada seÒal de cada archivo
+subplot(2, 3, 1) % Varias Graficas (2 filas, 3 columnas, 1ra posiciÛn)
+plot(dom1_W,X_ir1_w, '-*')  % SeÒal original: Oxi1
 xlim([0 ZOOM_TF1])  % Hacer un zoom al espectro, ver los armonicos y la f0
-title('TFourier: IR - se√±al 1') % Titulo del gr√°fico
+title('TFourier: IR - seÒal 1') % Titulo del gr·fico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 4) % Varias Graficas (2 filas, 3 columnas, 4ta posici√≥n)
-plot(dom1_W,X_red1_w, '-o')  % Se√±al original: Oxi1
+subplot(2, 3, 4) % Varias Graficas (2 filas, 3 columnas, 4ta posiciÛn)
+plot(dom1_W,X_red1_w, '-o')  % SeÒal original: Oxi1
 xlim([0 ZOOM_TF1])  % Hacer un zoom al espectro, ver los armonicos y la f0
-title('TFourier: RED - se√±al 1 (BPM)') % Titulo del gr√°fico
+title('TFourier: RED - seÒal 1 (BPM)') % Titulo del gr·fico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 2) % Varias Graficas (2 filas, 3 columnas, 2da posici√≥n)
-plot(dom2_W,X_ir2_w, '-*')  % Se√±al original: Oxi2
+subplot(2, 3, 2) % Varias Graficas (2 filas, 3 columnas, 2da posiciÛn)
+plot(dom2_W,X_ir2_w, '-*')  % SeÒal original: Oxi2
 xlim([0 ZOOM_TF2])  % Hacer un zoom al espectro, ver los armonicos y la f0
-title('TFourier: IR - se√±al 2') % Titulo del gr√°fico
+title('TFourier: IR - seÒal 2') % Titulo del gr·fico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 5) % Varias Graficas (2 filas, 3 columnas, 5ta posici√≥n)
-plot(dom2_W,X_red2_w, '-o')  % Se√±al original: Oxi2
+subplot(2, 3, 5) % Varias Graficas (2 filas, 3 columnas, 5ta posiciÛn)
+plot(dom2_W,X_red2_w, '-o')  % SeÒal original: Oxi2
 xlim([0 ZOOM_TF2])  % Hacer un zoom al espectro, ver los armonicos y la f0
-title('TFourier: RED - se√±al 2 (BPM)') % Titulo del gr√°fico
+title('TFourier: RED - seÒal 2 (BPM)') % Titulo del gr·fico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 3) % Varias Graficas (2 filas, 3 columnas, 3ra posici√≥n)
-plot(dom3_W,X_ir3_w, '-*')  % Se√±al original: Oxi3
+subplot(2, 3, 3) % Varias Graficas (2 filas, 3 columnas, 3ra posiciÛn)
+plot(dom3_W,X_ir3_w, '-*')  % SeÒal original: Oxi3
 xlim([0 ZOOM_TF3])  % Hacer un zoom al espectro, ver los armonicos y la f0
-title('TFourier: IR - se√±al 3') % Titulo del gr√°fico
+title('TFourier: IR - seÒal 3') % Titulo del gr·fico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 
-subplot(2, 3, 6) % Varias Graficas (2 filas, 3 columnas, 6ta posici√≥n)
-plot(dom3_W,X_red3_w, '-o')  % Se√±al original: Oxi3
+subplot(2, 3, 6) % Varias Graficas (2 filas, 3 columnas, 6ta posiciÛn)
+plot(dom3_W,X_red3_w, '-o')  % SeÒal original: Oxi3
 xlim([0 ZOOM_TF3])  % Hacer un zoom al espectro, ver los armonicos y la f0
-title('TFourier: RED - se√±al 3 (BPM)') % Titulo del gr√°fico
+title('TFourier: RED - seÒal 3 (BPM)') % Titulo del gr·fico
 xlabel('frecuencia (w) en Hz') % Nombre del eje X
 ylabel('Amplitud Am')          % Nombre del eje Y
-grid on % Cuadr√≠cula Activada
+grid on % CuadrÌcula Activada
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
